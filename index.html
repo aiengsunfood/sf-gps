@@ -101,18 +101,21 @@
   }
   function start() {
     best = null;
+    clearTimeout(timer);
+    timer = null;
     $('ico').innerHTML = '<div class="spin"></div>';
     $('title').textContent = 'กำลังหาตำแหน่ง…';
     $('msg').textContent = 'อนุญาตให้ใช้ตำแหน่งถ้ามีถาม';
     $('text').hidden = $('copy').hidden = $('retry').hidden = $('map').hidden = true;
     if (!navigator.geolocation) return fail(null);
-    // อ่านหลายครั้ง เก็บค่าที่แม่นสุด: แม่นถึง 30 ม. = พอ · ไม่ถึง = ใช้ค่าที่ดีที่สุดใน 12 วินาที
+    // เร็วก่อน (ผู้ใช้ 25 พ.ย. 2569: หน่วง): แม่นถึง 50 ม. = ใช้เลย · ไม่ถึง = รอค่าที่ดีกว่าอีก 3 วิ แล้วใช้ค่าที่ดีที่สุด
+    // (เดิมรอถึง 30 ม. นานสุด 12 วิ — ในอาคารแทบไม่ถึง) · ตำแหน่งที่มือถือจับไว้ไม่เกิน 15 วิ ใช้ได้เลย
     watch = navigator.geolocation.watchPosition(function (p) {
       if (!best || p.coords.accuracy < best.coords.accuracy) best = p;
       $('msg').textContent = 'ความแม่นยำตอนนี้ ±' + Math.round(best.coords.accuracy) + ' ม.';
-      if (best.coords.accuracy <= 30) done();
-    }, fail, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
-    timer = setTimeout(function () { best ? done() : null; }, 12000);
+      if (best.coords.accuracy <= 50) return done();
+      if (!timer) timer = setTimeout(done, 3000);
+    }, fail, { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 });
   }
   $('retry').onclick = start;
   $('copy').onclick = function () {
