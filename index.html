@@ -62,6 +62,8 @@
     watch = null;
     if (!best) return;
     var text = textOf(best), acc = Math.round(best.coords.accuracy);
+    // ส่งตรงให้ฟอร์มก่อน (หน้าต่างแม่ยังอยู่ = ขึ้นทันที แม้เข้าเว็บบริษัทไม่ได้ตอนนั้น) แล้วค่อยไปหน้าส่งของระบบ (สำรองให้ฟอร์มดึง + ปิดหน้านี้)
+    if (parent) { try { parent.postMessage({ type: 'sf-gps', text: text, acc: acc }, o); } catch (e) {} }
     if (back) {   // รอสักครู่ต่อ → หน้าส่งของระบบ → กลับฟอร์ม
       location.replace(back + '?r=gps/drop#k=' + k + '&t=' + encodeURIComponent(text));
       return;
