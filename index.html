@@ -37,12 +37,16 @@
 </main>
 <script>
 /* หน้าช่วยเช็คอิน GPS ของ Sale Feed — ระบบหลักเป็น http มือถือไม่ให้อ่าน GPS จึงอ่านที่หน้านี้ (https) แล้วส่งกลับ
+   #o=ต้นทาง &k=รหัสสุ่ม &b=ที่อยู่ระบบ → ได้ตำแหน่งแล้วเปิด b?r=gps/drop#k=..&t=.. (ข้อความอยู่หลัง # ไม่ถูกส่งไปที่ไหนนอกจากเว็บต้นทาง)
    ส่งกลับได้เฉพาะเว็บในรายชื่อ (กันเว็บอื่นเปิดหน้านี้แอบเอาตำแหน่ง) · ไม่เก็บ/ไม่ส่งข้อมูลไปที่อื่น
    เปิดเป็นหน้าต่างใหม่ (window.open) → postMessage กลับ แล้วปิดตัวเอง · ไม่มีหน้าต่างแม่ (แอปบนหน้าจอโฮม/LINE) → คัดลอกข้อความไปวางเอง */
 (function () {
   var ALLOW = ['http://dss.sungroup.co.th', 'https://dss.sungroup.co.th', 'http://172.16.4.5', 'https://172.16.4.5', 'http://203.130.137.158'];
-  var o = decodeURIComponent((location.hash.match(/[#&]o=([^&]+)/) || [])[1] || '');
+  var arg = function (n) { var m = location.hash.match(new RegExp('[#&]' + n + '=([^&]+)')); try { return m ? decodeURIComponent(m[1]) : ''; } catch (e) { return ''; } };
+  var o = arg('o'), k = arg('k'), b = arg('b');
   var parent = window.opener && ALLOW.indexOf(o) >= 0 ? window.opener : null;
+  // คลิกเดียว: ส่งกลับเว็บต้นทางเอง (หน้า ?r=gps/drop เก็บไว้ให้ฟอร์มดึง) — ใช้ได้แม้ไม่มีหน้าต่างแม่ (แอปบนหน้าจอโฮม/LINE)
+  var back = /^[0-9a-f]{32}$/.test(k) && ALLOW.some(function (a) { return b.indexOf(a + '/') === 0; }) ? b : '';
   var $ = function (id) { return document.getElementById(id); };
   var best = null, watch = null, timer = null;
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
@@ -63,7 +67,12 @@
     $('text').textContent = text;
     $('text').hidden = false;
     $('retry').hidden = false;
-    if (parent) {
+    if (back) {
+      $('msg').textContent = 'กำลังส่งเข้าฟอร์ม…';
+      location.replace(back + '?r=gps/drop#k=' + k + '&t=' + encodeURIComponent(text));
+      return;
+    }
+    if (parent) {   // ลิงก์รุ่นเก่าที่ไม่มีรหัส
       try {
         parent.postMessage({ type: 'sf-gps', text: text, acc: acc }, o);
         $('msg').textContent = 'ส่งเข้าฟอร์มแล้ว กำลังกลับ…';
