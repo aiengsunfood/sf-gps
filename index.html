@@ -21,6 +21,7 @@
   .bad { color: var(--bad); }
   .spin { width: 22px; height: 22px; border: 3px solid var(--mint); border-top-color: var(--brand); border-radius: 50%; animation: s 1s linear infinite; }
   @keyframes s { to { transform: rotate(360deg); } }
+  #map { display: block; width: 100%; height: 200px; margin-top: 14px; border: 0; border-radius: 12px; background: var(--bg); }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -29,6 +30,7 @@
   <div class="ico" id="ico"><div class="spin"></div></div>
   <h1 id="title">กำลังหาตำแหน่ง…</h1>
   <p id="msg">อนุญาตให้ใช้ตำแหน่งถ้ามีถาม</p>
+  <iframe id="map" title="แผนที่ตำแหน่ง" hidden></iframe>
   <div class="big" id="text" hidden></div>
   <button id="copy" hidden>คัดลอก แล้วกลับไปวางในช่องตำแหน่ง</button>
   <button id="retry" class="ghost" hidden>ลองใหม่</button>
@@ -69,6 +71,8 @@
         return;
       } catch (e) {}
     }
+    $('map').src = 'https://www.google.com/maps?q=' + best.coords.latitude.toFixed(6) + ',' + best.coords.longitude.toFixed(6) + '&z=16&output=embed';   // หมุดตรงที่อยู่
+    $('map').hidden = false;
     $('msg').textContent = 'กดคัดลอก แล้วกลับไปวางในช่อง "ตำแหน่ง" ของฟอร์ม';
     $('copy').hidden = false;
   }
@@ -89,7 +93,7 @@
     $('ico').innerHTML = '<div class="spin"></div>';
     $('title').textContent = 'กำลังหาตำแหน่ง…';
     $('msg').textContent = 'อนุญาตให้ใช้ตำแหน่งถ้ามีถาม';
-    $('text').hidden = $('copy').hidden = $('retry').hidden = true;
+    $('text').hidden = $('copy').hidden = $('retry').hidden = $('map').hidden = true;
     if (!navigator.geolocation) return fail(null);
     // อ่านหลายครั้ง เก็บค่าที่แม่นสุด: แม่นถึง 30 ม. = พอ · ไม่ถึง = ใช้ค่าที่ดีที่สุดใน 12 วินาที
     watch = navigator.geolocation.watchPosition(function (p) {
