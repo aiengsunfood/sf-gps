@@ -28,8 +28,8 @@
 <body>
 <main>
   <div class="ico" id="ico"><div class="spin"></div></div>
-  <h1 id="title">กำลังหาตำแหน่ง…</h1>
-  <p id="msg">อนุญาตให้ใช้ตำแหน่งถ้ามีถาม</p>
+  <h1 id="title">รอสักครู่…</h1>
+  <p id="msg"></p>
   <iframe id="map" title="แผนที่ตำแหน่ง" hidden></iframe>
   <div class="big" id="text" hidden></div>
   <button id="copy" hidden>คัดลอก แล้วกลับไปวางในช่องตำแหน่ง</button>
@@ -62,16 +62,15 @@
     watch = null;
     if (!best) return;
     var text = textOf(best), acc = Math.round(best.coords.accuracy);
+    if (back) {   // รอสักครู่ต่อ → หน้าส่งของระบบ → กลับฟอร์ม
+      location.replace(back + '?r=gps/drop#k=' + k + '&t=' + encodeURIComponent(text));
+      return;
+    }
     $('ico').innerHTML = '✓';
     $('title').textContent = 'ได้ตำแหน่งแล้ว ±' + acc + ' ม.';
     $('text').textContent = text;
     $('text').hidden = false;
     $('retry').hidden = false;
-    if (back) {
-      $('msg').textContent = 'กำลังส่งเข้าฟอร์ม…';
-      location.replace(back + '?r=gps/drop#k=' + k + '&t=' + encodeURIComponent(text));
-      return;
-    }
     if (parent) {   // ลิงก์รุ่นเก่าที่ไม่มีรหัส
       try {
         parent.postMessage({ type: 'sf-gps', text: text, acc: acc }, o);
@@ -104,15 +103,14 @@
     clearTimeout(timer);
     timer = null;
     $('ico').innerHTML = '<div class="spin"></div>';
-    $('title').textContent = 'กำลังหาตำแหน่ง…';
-    $('msg').textContent = 'อนุญาตให้ใช้ตำแหน่งถ้ามีถาม';
+    $('title').textContent = 'รอสักครู่…';
+    $('msg').textContent = '';
     $('text').hidden = $('copy').hidden = $('retry').hidden = $('map').hidden = true;
     if (!navigator.geolocation) return fail(null);
     // เร็วก่อน (ผู้ใช้ 25 พ.ย. 2569: หน่วง): แม่นถึง 50 ม. = ใช้เลย · ไม่ถึง = รอค่าที่ดีกว่าอีก 3 วิ แล้วใช้ค่าที่ดีที่สุด
     // (เดิมรอถึง 30 ม. นานสุด 12 วิ — ในอาคารแทบไม่ถึง) · ตำแหน่งที่มือถือจับไว้ไม่เกิน 15 วิ ใช้ได้เลย
     watch = navigator.geolocation.watchPosition(function (p) {
       if (!best || p.coords.accuracy < best.coords.accuracy) best = p;
-      $('msg').textContent = 'ความแม่นยำตอนนี้ ±' + Math.round(best.coords.accuracy) + ' ม.';
       if (best.coords.accuracy <= 50) return done();
       if (!timer) timer = setTimeout(done, 3000);
     }, fail, { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 });
